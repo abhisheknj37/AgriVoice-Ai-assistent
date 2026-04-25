@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # AgriVoice - Enhanced AI-Powered Farming Assistant
 
 A comprehensive farming assistant application with machine learning capabilities, built with Django REST Framework backend and React frontend.
@@ -207,3 +208,6 @@ For questions or issues:
 ---
 
 **AgriVoice** - Empowering farmers with AI and data-driven insights 🌱
+=======
+# AgriVoice-Ai-assistent
+>>>>>>> 2de018adac229ccf469340f8131008586dc515ff
