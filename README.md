@@ -209,5 +209,3 @@ For questions or issues:
 
 **AgriVoice** - Empowering farmers with AI and data-driven insights 🌱
 =======
-# AgriVoice-Ai-assistent
->>>>>>> 2de018adac229ccf469340f8131008586dc515ff
