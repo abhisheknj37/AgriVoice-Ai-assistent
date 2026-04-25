@@ -1,0 +1,13 @@
+# Railway Deployment Configuration
+
+# For backend (Django)
+[build]
+builder = "dockerfile"
+
+[deploy]
+healthcheckPath = "/api/"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+
+# Environment variables will be set in Railway dashboard
+# DJANGO_SECRET_KEY, OPENAI_API_KEY, SARVAM_API_KEY, etc.

@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - agrivoice_network
+
+  backend:
+    build: .
+    restart: unless-stopped
+    environment:
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SARVAM_API_KEY=${SARVAM_API_KEY}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}
+      - DOMAIN=${DOMAIN}
+    volumes:
+      - ./media:/app/media
+      - ./staticfiles:/app/staticfiles
+    depends_on:
+      - db
+    networks:
+      - agrivoice_network
+    command: gunicorn agrivoice.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120
+
+  frontend:
+    build: ../agrivoice-ui
+    restart: unless-stopped
+    environment:
+      - REACT_APP_API_BASE_URL=https://${DOMAIN}/api
+    depends_on:
+      - backend
+    networks:
+      - agrivoice_network
+
+volumes:
+  postgres_data:
+
+networks:
+  agrivoice_network:
+    driver: bridge

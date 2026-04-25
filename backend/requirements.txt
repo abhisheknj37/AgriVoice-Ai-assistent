@@ -1,0 +1,15 @@
+django
+djangorestframework
+gtts
+requests
+openai
+django-cors-headers
+scikit-learn
+pandas
+numpy
+joblib
+gunicorn
+psycopg2-binary
+whitenoise
+python-decouple
+dj-database-url
