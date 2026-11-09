@@ -21,11 +21,11 @@ if not allowed_hosts:
 ALLOWED_HOSTS = list(dict.fromkeys(allowed_hosts))
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
-if not DATABASE_URL:
-    raise RuntimeError("Set DATABASE_URL to a persistent production database.")
-DATABASES = {
-    "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=DATABASE_URL.startswith("postgres"))
-}
+if DATABASE_URL:
+    DATABASES = {"default": dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=DATABASE_URL.startswith("postgres"))}
+else:
+    # Demo fallback only. Use a persistent PostgreSQL DATABASE_URL for production data.
+    DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": os.environ.get("SQLITE_PATH", "/tmp/db.sqlite3")}}
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
@@ -37,8 +37,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 frontend_url = os.environ.get("FRONTEND_URL", "").strip().rstrip("/")
 CORS_ALLOWED_ORIGINS = [frontend_url] if frontend_url else []
 CSRF_TRUSTED_ORIGINS = [frontend_url] if frontend_url else []
-if not frontend_url:
-    raise RuntimeError("Set FRONTEND_URL to the exact deployed frontend origin.")
+
 
 CORS_ALLOW_CREDENTIALS = True
 SESSION_COOKIE_SAMESITE = "None"
