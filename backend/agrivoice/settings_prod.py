@@ -2,94 +2,60 @@ import os
 import dj_database_url
 from .settings import *
 
-# Production settings
 DEBUG = False
 
-# Replace with your actual domain
-ALLOWED_HOSTS = ['your-domain.com', 'www.your-domain.com', 'localhost', '127.0.0.1']
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "").strip()
+if not SECRET_KEY or SECRET_KEY == "your-production-secret-key-here":
+    raise RuntimeError("Set a strong DJANGO_SECRET_KEY environment variable.")
 
-# Add Railway/Render deployment URLs
-RAILWAY_STATIC_URL = os.environ.get('RAILWAY_STATIC_URL')
-RENDER_EXTERNAL_URL = os.environ.get('RENDER_EXTERNAL_URL')
+def _csv_env(name):
+    return [value.strip() for value in os.environ.get(name, "").split(",") if value.strip()]
 
-if RAILWAY_STATIC_URL:
-    ALLOWED_HOSTS.append(RAILWAY_STATIC_URL.replace('https://', '').replace('http://', ''))
-if RENDER_EXTERNAL_URL:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_URL.replace('https://', '').replace('http://', ''))
+allowed_hosts = _csv_env("ALLOWED_HOSTS")
+for env_name in ("RENDER_EXTERNAL_HOSTNAME", "RAILWAY_PUBLIC_DOMAIN"):
+    host = os.environ.get(env_name, "").strip()
+    if host:
+        allowed_hosts.append(host.removeprefix("https://").removeprefix("http://").rstrip("/"))
+if not allowed_hosts:
+    raise RuntimeError("Set ALLOWED_HOSTS to your deployed backend hostname(s).")
+ALLOWED_HOSTS = list(dict.fromkeys(allowed_hosts))
 
-# Security settings
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'your-production-secret-key-here')
-
-# Database - supports Railway/Render DATABASE_URL
+DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+if not DATABASE_URL:
+    raise RuntimeError("Set DATABASE_URL to a persistent production database.")
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite3'),
-        conn_max_age=600
-    )
+    "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=DATABASE_URL.startswith("postgres"))
 }
 
-# Static files
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# WhiteNoise for static files
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+frontend_url = os.environ.get("FRONTEND_URL", "").strip().rstrip("/")
+CORS_ALLOWED_ORIGINS = [frontend_url] if frontend_url else []
+CSRF_TRUSTED_ORIGINS = [frontend_url] if frontend_url else []
+if not frontend_url:
+    raise RuntimeError("Set FRONTEND_URL to the exact deployed frontend origin.")
 
-# CORS settings for production
-CORS_ALLOWED_ORIGINS = [
-    "https://your-domain.com",
-    "https://www.your-domain.com",
-    "http://localhost:3000",  # For development
-]
-
-CSRF_TRUSTED_ORIGINS = [
-    "https://your-domain.com",
-    "https://www.your-domain.com",
-]
-
-# Email settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@your-domain.com')
-
-# API Keys
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
-SARVAM_API_KEY = os.environ.get('SARVAM_API_KEY')
-
-# Security headers
-SECURE_BROWSER_XSS_FILTER = True
+CORS_ALLOW_CREDENTIALS = True
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SECURE = True
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
+X_FRAME_OPTIONS = "DENY"
 
-# HTTPS settings (uncomment when you have SSL)
-# SECURE_SSL_REDIRECT = True
-# SESSION_COOKIE_SECURE = True
-# CSRF_COOKIE_SECURE = True
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "webmaster@localhost")
 
-# Logging
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'file': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'filename': 'django_errors.log',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['file'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-    },
-}
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+SARVAM_API_KEY = os.environ.get("SARVAM_API_KEY", "")
