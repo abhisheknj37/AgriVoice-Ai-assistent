@@ -1,211 +1,60 @@
-<<<<<<< HEAD
-# AgriVoice - Enhanced AI-Powered Farming Assistant
+# AgriVoice — AI-Powered Farming Assistant
 
-A comprehensive farming assistant application with machine learning capabilities, built with Django REST Framework backend and React frontend.
+AgriVoice combines a Django REST Framework API with a React frontend to provide crop guidance, soil recommendations, weather information and an AI farming assistant.
 
-## 🚀 Features
+## Repository layout
 
-### 🤖 AI & Machine Learning
-- **ML-Enhanced Crop Prediction**: Uses Random Forest classifier trained on environmental data
-- **AI Assistant**: Powered by OpenAI GPT-3.5-turbo and Sarvam AI with conversation memory
-- **Smart Recommendations**: Context-aware farming advice
+- `backend/` — Django API, authentication, ML model and deployment configuration
+- `agrivoice-ui/` — React frontend (if present in your checkout)
+- `DEPLOYMENT.md` and `FREE_DEPLOYMENT.md` — hosting notes
 
-### 🔐 Authentication & Security
-- **Token-based Authentication**: Secure user sessions with Django REST Framework
-- **User Management**: Registration and login system
-- **Protected Endpoints**: All API endpoints require authentication
+## Backend: local setup
 
-### 📊 Data Management
-- **Query History**: Track all user questions and AI responses
-- **Prediction History**: Store and review crop predictions
-- **Conversation Memory**: AI remembers previous interactions
-
-### 🌾 Farming Tools
-- **Crop Library**: Comprehensive database of crop information
-- **Soil Advisor**: Personalized soil management recommendations
-- **Weather Integration**: Real-time weather data and forecasting
-- **Voice Commands**: Speech-to-text for hands-free operation
-
-### 🎨 Visual Design
-- **Realistic Images**: High-quality farming and crop photography from Unsplash
-- **Modern UI**: Clean Material-UI components with professional styling
-- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
-
-### 🖼️ Image Customization
-The application uses high-quality images from Unsplash (free for commercial use). To customize images:
-1. Replace image URLs in component files (Dashboard.js, CropLibrary.js, etc.)
-2. Use your own images by placing them in `src/assets/` and importing them
-3. All images are optimized for web delivery with appropriate sizing
-
-## 🛠️ Technology Stack
-
-### Backend
-- **Django 4.x**: Web framework
-- **Django REST Framework**: API development
-- **SQLite**: Database
-- **Scikit-learn**: Machine learning
-- **OpenAI API**: AI responses
-- **Joblib**: Model serialization
-
-### Frontend
-- **React 18**: UI framework
-- **Material-UI**: Component library
-- **React Router**: Navigation
-- **Axios**: HTTP client
-- **Framer Motion**: Animations
-
-## 📦 Installation & Setup
-
-### Prerequisites
-- Python 3.8+
-- Node.js 16+
-- Git
-
-### Backend Setup
-
-1. **Clone and navigate to backend:**
-   ```bash
-   cd d:\agrivoice\backend
-   ```
-
-2. **Create virtual environment:**
-   ```bash
-   python -m venv .venv
-   .venv\Scripts\activate  # Windows
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Run migrations:**
-   ```bash
-   python manage.py makemigrations
-   python manage.py migrate
-   ```
-
-5. **Train ML model:**
-   ```bash
-   python ml_model/train.py
-   ```
-
-6. **Start Django server:**
-   ```bash
-   python manage.py runserver
-   ```
-
-### Frontend Setup
-
-1. **Navigate to React app:**
-   ```bash
-   cd d:\agrivoice\agrivoice-ui
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Start development server:**
-   ```bash
-   npm start
-   ```
-
-## 🔧 Configuration
-
-### OpenAI API Key
-Add your OpenAI API key to `backend/agrivoice/settings.py`:
-```python
-OPENAI_API_KEY = "your-api-key-here"
-```
-
-### Sarvam AI API Key
-Add your Sarvam AI API key to `backend/agrivoice/settings.py`:
-```python
-SARVAM_API_KEY = "your-api-key-here"
-```
-
-### Weather API
-The app uses OpenWeatherMap API (free tier included).
-
-## 📊 ML Model Details
-
-### Training Data
-- **Features**: Rainfall, Temperature, Humidity, Soil pH
-- **Crops**: Rice, Wheat, Maize, Cotton, Sugarcane, Soybean, Potato, Tomato
-- **Algorithm**: Random Forest Classifier
-- **Accuracy**: ~38.5% (can be improved with more data)
-
-### Model Enhancement
-To improve accuracy:
-1. Add more training data
-2. Include additional features (soil nutrients, pest data)
-3. Use more advanced algorithms (Neural Networks)
-4. Implement cross-validation
-
-## 🌐 API Endpoints
-
-### Authentication
-- `POST /api/auth/token/login/` - User login
-- `POST /api/auth/users/` - User registration
-
-### Core Features
-- `GET /api/crops/` - Get crop library
-- `POST /api/predict/` - ML crop prediction
-- `POST /api/ask/` - AI assistant query (supports model parameter: "openai" or "sarvam")
-- `POST /api/soil/` - Soil advice
-- `POST /api/forecast/` - Weather forecast
-
-### History & Memory
-- `GET /api/history/` - Query history
-- `GET /api/predictions/` - Prediction history
-- `GET /api/conversation/` - Full conversation log
-
-## 🚀 Deployment
-
-### Backend Deployment
 ```bash
-# Production settings
-python manage.py collectstatic
-# Use Gunicorn or similar WSGI server
+cd backend
+python -m venv .venv
+# Windows: .venv\\Scripts\\activate
+# macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
 ```
 
-### Frontend Deployment
-```bash
-npm run build
-# Serve build/ directory with nginx/apache
-```
+The API is available at `http://127.0.0.1:8000/`.
 
-## 📈 Future Enhancements
+## Configuration
 
-- **Advanced ML Models**: Neural networks for better predictions
-- **Real-time Data**: IoT sensor integration
-- **Mobile App**: React Native implementation
-- **Multi-language**: Support for local languages
-- **Offline Mode**: Progressive Web App features
-- **Analytics Dashboard**: Farming insights and trends
+Copy `backend/.env.example` to `backend/.env` and provide values for the services you use. Never commit real API keys, database passwords, email passwords or production secret keys.
 
-## 🤝 Contributing
+For production set at least:
 
-1. Fork the repository
-2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Create Pull Request
+- `DJANGO_SECRET_KEY` — a long, random secret
+- `DJANGO_SETTINGS_MODULE=agrivoice.settings_prod`
+- `DATABASE_URL` — a persistent PostgreSQL URL for production
+- `OPENAI_API_KEY` and/or `SARVAM_API_KEY` when those integrations are enabled
+- `FRONTEND_URL` — the deployed frontend origin
 
-## 📄 License
+The production settings reject the placeholder secret key and use environment-based host and CORS configuration.
 
-MIT License - see LICENSE file for details
+## Frontend
 
-## 📞 Support
+If the React frontend is included in your checkout, enter its directory, install dependencies and run its documented build command. Configure its API base URL to point to the deployed backend.
 
-For questions or issues:
-- Create an issue on GitHub
-- Check the documentation
-- Review the code comments
+## API overview
 
----
+- `/api/` — application API routes
+- `/api/auth/` — authentication routes
+- `/admin/` — Django administration
 
-**AgriVoice** - Empowering farmers with AI and data-driven insights 🌱
-=======
+See `backend/api/urls.py` and `backend/users/urls.py` for the authoritative endpoint list.
+
+## Deployment
+
+Use the deployment guides in this repository as a starting point. Run Django with Gunicorn, apply migrations during release, and serve static assets using WhiteNoise or a reverse proxy. Use a persistent database for user data; ephemeral service storage is not suitable for production records.
+
+## Security notes
+
+- Do not use Django's development server in production.
+- Do not use wildcard allowed hosts or hardcoded credentials.
+- Keep secrets in the hosting provider's environment-variable settings.
+- Configure the exact frontend origin in `FRONTEND_URL`.
