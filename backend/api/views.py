@@ -4,7 +4,7 @@ import random
 
 from django.conf import settings
 from django.core.mail import send_mail
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -40,7 +40,60 @@ from .serializers import QueryHistorySerializer, CropPredictionSerializer, Conve
 
 
 def home(request):
-    return JsonResponse({"message": "AgriVoice API running 🚀"})
+    page = r"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AgriVoice — Smart Farming Assistant</title>
+<style>
+:root{--green:#176b45;--mint:#eaf5ee;--ink:#1c2b22;--muted:#6b7c70;--line:#dce8df}
+*{box-sizing:border-box}body{margin:0;background:#f5f8f4;color:var(--ink);font:15px/1.5 Inter,system-ui,Arial}
+header{background:linear-gradient(120deg,#104e37,#258452);color:white;padding:28px max(22px,calc((100% - 1050px)/2))}
+header h1{margin:0;font-size:30px}header p{margin:6px 0 0;color:#d8f1df}
+main{max-width:1050px;margin:26px auto;padding:0 18px}.panel{background:white;border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 8px 24px #173c1a0a}
+h2{font-size:18px;margin:0 0 14px}.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:180px}
+input,textarea,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff;margin:5px 0 10px}
+textarea{min-height:92px;resize:vertical}button{border:0;border-radius:10px;background:var(--green);color:white;padding:11px 16px;font-weight:650;cursor:pointer}button.secondary{background:var(--mint);color:var(--green)}button:disabled{opacity:.5}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.tabs button.active{background:#174d36}
+.result{background:#f1f7f2;border:1px solid var(--line);border-radius:10px;padding:13px;margin-top:12px;white-space:pre-wrap;min-height:48px}
+.note{color:var(--muted);font-size:13px}.hidden{display:none!important}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.item{background:#f5f9f5;padding:14px;border-radius:12px;border:1px solid var(--line)}footer{text-align:center;color:var(--muted);padding:20px}
+</style></head>
+<body><header><h1>🌱 AgriVoice</h1><p>Your smart farming companion — crop guidance, soil advice and AI assistance.</p></header>
+<main>
+<section class="panel" id="auth"><h2>Welcome to AgriVoice</h2><div class="tabs"><button id="loginTab" class="active" onclick="setMode('login')">Login</button><button id="registerTab" class="secondary" onclick="setMode('register')">Create account</button></div>
+<div class="row"><div><label>Username</label><input id="username" autocomplete="username" placeholder="Enter username"></div><div><label>Password</label><input id="password" type="password" autocomplete="current-password" placeholder="At least 8 characters"></div></div><button onclick="authenticate()">Continue</button><div id="authResult" class="result">Sign in or create an account to use the farming tools.</div></section>
+<section id="workspace" class="hidden">
+<div class="panel"><div class="row" style="align-items:center"><div><h2 id="welcome">Your farming workspace</h2><p class="note">Your account is authenticated securely using a session token.</p></div><div style="text-align:right"><button class="secondary" onclick="logout()">Sign out</button></div></div>
+<div class="tabs"><button class="active" onclick="showTool('ask',this)">AI Assistant</button><button class="secondary" onclick="showTool('predict',this)">Crop Prediction</button><button class="secondary" onclick="showTool('soil',this)">Soil Advice</button><button class="secondary" onclick="showTool('crops',this)">Crop Guide</button><button class="secondary" onclick="showTool('forecast',this)">Forecast</button><button class="secondary" onclick="showTool('history',this)">My History</button></div>
+<div id="tool-ask"><h2>Ask the farming assistant</h2><textarea id="question" placeholder="Example: How can I improve soil fertility for rice?"></textarea><div class="row"><select id="language"><option value="en">English</option><option value="kn">Kannada</option></select><select id="model"><option value="openai">AI assistant</option><option value="sarvam">Sarvam</option></select></div><button onclick="ask()">Ask AgriVoice</button><div id="answer" class="result">Your answer will appear here.</div></div>
+<div id="tool-predict" class="hidden"><h2>Crop recommendation</h2><textarea id="cropQuery" placeholder="Describe rainfall, temperature, humidity and soil conditions..."></textarea><button onclick="predict()">Recommend crop</button><div id="prediction" class="result">Your recommendation will appear here.</div></div>
+<div id="tool-soil" class="hidden"><h2>Soil care advice</h2><div class="row"><select id="soilType"><option value="loam">Loamy soil</option><option value="clay">Clay soil</option><option value="sandy">Sandy soil</option><option value="black">Black soil</option><option value="red">Red soil</option></select><input id="moisture" placeholder="Moisture level (optional)"></div><button onclick="soil()">Get soil advice</button><div id="soilResult" class="result"></div></div>
+<div id="tool-crops" class="hidden"><h2>Crop guide</h2><button onclick="crops()">Load crop guide</button><div id="cropList" class="grid" style="margin-top:12px"></div></div>
+<div id="tool-forecast" class="hidden"><h2>Sample forecast</h2><select id="days"><option>3</option><option>5</option><option>7</option></select><button onclick="forecast()">Show forecast</button><div id="forecastResult" class="grid" style="margin-top:12px"></div><p class="note">This endpoint currently returns sample forecast values, not a live weather feed.</p></div>
+<div id="tool-history" class="hidden"><h2>Your recent activity</h2><button onclick="history()">Refresh history</button><div id="historyResult" class="result"></div></div>
+</div></section>
+</main><footer>AgriVoice · Built to support smarter farming decisions</footer>
+<script>
+let token=localStorage.getItem('agrivoice_token')||'',mode='login';
+const $=id=>document.getElementById(id);
+function setMode(v){mode=v;$('loginTab').className=v==='login'?'active':'secondary';$('registerTab').className=v==='register'?'active':'secondary';$('password').autocomplete=v==='login'?'current-password':'new-password';$('authResult').textContent=v==='login'?'Sign in to continue.':'Create an account with a password of at least 8 characters.'}
+async function call(path,data=null){const opt={method:data?'POST':'GET',headers:{'Content-Type':'application/json','Authorization':'Token '+token}};if(data)opt.body=JSON.stringify(data);const res=await fetch(path,opt);let json={};try{json=await res.json()}catch{}if(!res.ok)throw new Error(json.error||json.detail||'Request failed ('+res.status+')');return json}
+function showWorkspace(){ $('auth').classList.add('hidden');$('workspace').classList.remove('hidden')}
+if(token)showWorkspace();
+async function authenticate(){const username=$('username').value.trim(),password=$('password').value;if(!username||!password){$('authResult').textContent='Enter username and password.';return}try{const data=await fetch(mode==='login'?'/auth/login/':'/auth/register/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});const json=await data.json();if(!data.ok)throw new Error(json.error||'Authentication failed');token=json.token;localStorage.setItem('agrivoice_token',token);$('authResult').textContent='Success!';showWorkspace()}catch(e){$('authResult').textContent=e.message}}
+function logout(){token='';localStorage.removeItem('agrivoice_token');$('workspace').classList.add('hidden');$('auth').classList.remove('hidden')}
+function showTool(name,btn){['ask','predict','soil','crops','forecast','history'].forEach(x=>$('tool-'+x).classList.toggle('hidden',x!==name));document.querySelectorAll('#workspace .tabs button').forEach(x=>x.className='secondary');btn.className='active'}
+async function run(id,fn){try{const data=await fn();$(id).textContent=typeof data==='string'?data:JSON.stringify(data,null,2)}catch(e){$(id).textContent=e.message;if(e.message.includes('401')||e.message.toLowerCase().includes('credentials'))logout()}}
+function ask(){run('answer',async()=>{const d=await call('/api/ask/',{question:$('question').value,language:$('language').value,model:$('model').value});return d.answer})}
+function predict(){run('prediction',async()=>{const d=await call('/api/predict/',{query:$('cropQuery').value});return d.result})}
+function soil(){run('soilResult',async()=>{const d=await call('/api/soil/',{soil_type:$('soilType').value,moisture:$('moisture').value});return d.advice||d})}
+function crops(){run('cropList',async()=>{const d=await call('/api/crops/');$('cropList').innerHTML=(d.crops||[]).map(x=>'<div class="item"><b>'+x.name+'</b><p>'+x.best_for+'</p><small>'+x.notes+'</small></div>').join('');return ''})}
+function forecast(){run('forecastResult',async()=>{const d=await call('/api/forecast/',{days:Number($('days').value)});$('forecastResult').innerHTML=(d.forecast||[]).map(x=>'<div class="item"><b>'+x.day+'</b><p>'+x.temperature+'°C · '+x.condition+'</p></div>').join('');return ''})}
+function history(){run('historyResult',async()=>{const [a,b]=await Promise.all([call('/api/history/'),call('/api/predictions/')]);return {questions:a.history||[],predictions:b.predictions||[]}})}
+</script></body></html>"""
+    return HttpResponse(page)
+
 
 
 def _openai_response(question, language='en'):
