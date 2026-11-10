@@ -1,7 +1,7 @@
 # AgriVoice — AI-Powered Farming Assistant
 
-<escape>🚀 Live Backend API: https://agrivoice-api-5jh2.onrender.com</escape>  
-> Django API deployed on Render. Configure a persistent database and required provider credentials before production use.
+<escape>🌱 Live App: https://agrivoice-api-5jh2.onrender.com</escape>  
+The hosted AgriVoice workspace includes account registration, login, AI farming questions, crop recommendations, soil advice and crop guidance. Configure a persistent database and AI provider credentials for long-term use.
 
 
 AgriVoice combines a Django REST Framework API with a React frontend to provide crop guidance, soil recommendations, weather information and an AI farming assistant.
